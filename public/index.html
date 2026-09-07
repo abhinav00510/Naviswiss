@@ -1,54 +1,657 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>MPU6050 Live Dashboard</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="/style.css" />
+<!DOCTYPE html>
+<html lang="en">
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="https://unpkg.com/three@0.152.2/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>ORVIA | Intelligent Wearable Orthopedic Navigation Platform</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+    }
+}
+</script>
+
+    <!-- SOCKET.IO -->
+    <script src="/socket.io/socket.io.js"></script>
+
 </head>
 
+
 <body>
-  <header><h1>MPU6050 Live Dashboard</h1></header>
 
-  <main>
-    <section class="left">
+<!-- =========================================================
+     HEADER
+========================================================= -->
 
-      <div class="panel">
-        <h2>MPU1 (0x68)</h2>
-        <div class="readouts">
-          <div>Yaw: <span id="m1yaw">—</span>°</div>
-          <div>Pitch: <span id="m1pitch">—</span>°</div>
-          <div>Roll: <span id="m1roll">—</span>°</span></div>
+<header class="topbar">
+
+    <div class="brand">
+
+        <h1>ORVIA</h1>
+
+        <p>
+            Intelligent Wearable Orthopedic Navigation Platform
+        </p>
+
+    </div>
+
+
+    <div class="header-right">
+
+        <div class="system-status">
+
+            <span id="statusDot"></span>
+
+            <span id="systemStatus">
+                SYSTEM ONLINE
+            </span>
+
         </div>
-        <canvas id="chart1" height="200"></canvas>
-      </div>
 
-      <div class="panel">
-        <h2>MPU2 (0x69)</h2>
-        <div class="readouts">
-          <div>Yaw: <span id="m2yaw">—</span>°</div>
-          <div>Pitch: <span id="m2pitch">—</span>°</div>
-          <div>Roll: <span id="m2roll">—</span>°</span></div>
+
+        <div class="divider"></div>
+
+
+        <div
+            id="sensorCount"
+            class="sensor-count"
+        >
+            0/3 SENSORS CONNECTED
         </div>
-        <canvas id="chart2" height="200"></canvas>
-      </div>
+
+
+        <div class="divider"></div>
+
+
+        <div class="live-indicator">
+
+            Live
+
+            <span class="wifi-icon">
+                ◉
+            </span>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<!-- =========================================================
+     MAIN DASHBOARD
+========================================================= -->
+
+<main class="dashboard">
+
+
+    <!-- =====================================================
+         LEFT 3D PANEL
+    ====================================================== -->
+
+    <section class="visual-panel">
+
+
+        <div class="panel-title">
+
+            <h2>
+                3D Limb Navigation
+            </h2>
+
+            <p>
+                Real-time CAD model visualization
+            </p>
+
+        </div>
+
+
+        <!-- AXIS -->
+
+        <div class="axis">
+
+            <span class="axis-s">S</span>
+
+            <span class="axis-a">A</span>
+
+            <span class="axis-p">P</span>
+
+            <span class="axis-i">I</span>
+
+            <div class="axis-cross">
+                +
+            </div>
+
+        </div>
+
+
+        <!-- THREE.JS -->
+
+        <div id="threeContainer"></div>
+
+
+        <!-- LEFT TOOLBAR -->
+
+        <div class="toolbar">
+
+            <button class="tool active">
+                ⌂
+            </button>
+
+            <button class="tool">
+                ↻
+            </button>
+
+            <button class="tool">
+                ◇
+            </button>
+
+            <button class="tool">
+                ◎
+            </button>
+
+            <button class="tool">
+                ⚙
+            </button>
+
+        </div>
+
+
+        <!-- SENSOR LABELS -->
+
+        <div class="sensor-label thigh-label">
+
+            <div class="label-line green-line"></div>
+
+            <div class="label-box">
+
+                <strong>
+                    <span class="small-dot green"></span>
+                    KIT #2
+                </strong>
+
+                <span>
+                    FEMUR / THIGH
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="sensor-label knee-label">
+
+            <div class="label-line blue-line"></div>
+
+            <div class="label-box">
+
+                <strong>
+                    <span class="small-dot blue"></span>
+                    KIT #1
+                </strong>
+
+                <span>
+                    KNEE REFERENCE
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="sensor-label tibia-label">
+
+            <div class="label-line orange-line"></div>
+
+            <div class="label-box">
+
+                <strong>
+                    <span class="small-dot orange"></span>
+                    KIT #3
+                </strong>
+
+                <span>
+                    TIBIA / LOWER LEG
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- LEGEND -->
+
+        <div class="legend">
+
+            <div class="legend-item">
+
+                <span class="dot green"></span>
+
+                <div>
+                    <strong>Kit #2</strong>
+                    <small>Femur / Thigh</small>
+                </div>
+
+            </div>
+
+
+            <div class="legend-item">
+
+                <span class="dot blue"></span>
+
+                <div>
+                    <strong>Kit #1</strong>
+                    <small>Knee Reference</small>
+                </div>
+
+            </div>
+
+
+            <div class="legend-item">
+
+                <span class="dot orange"></span>
+
+                <div>
+                    <strong>Kit #3</strong>
+                    <small>Tibia / Lower Leg</small>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- VIEW CONTROLS -->
+
+        <div class="view-controls">
+
+            <button id="resetCamera">
+                ◉
+            </button>
+
+            <button id="fullscreen">
+                ⛶
+            </button>
+
+        </div>
 
     </section>
 
-    <section class="right">
-      <div id="threeWrap">
-        <div id="label">3D View (MPU1 left, MPU2 right)</div>
-        <div id="threeCanvas"></div>
-      </div>
 
-      <div id="log">Waiting for data…</div>
-    </section>
-  </main>
 
-  <script src="/app.js"></script>
+    <!-- =====================================================
+         RIGHT PANEL
+    ====================================================== -->
+
+    <aside class="right-panel">
+
+
+        <!-- =================================================
+             KNEE ALIGNMENT
+        ================================================== -->
+
+        <div class="card alignment-card">
+
+            <h3>
+                KNEE ALIGNMENT
+            </h3>
+
+            <div class="angle"
+                 id="kneeAngle">
+
+                0.0°
+
+            </div>
+
+            <p>
+                Relative femur–tibia angle
+            </p>
+
+
+            <!-- GAUGE -->
+
+            <div class="gauge">
+
+                <div class="gauge-label left">
+                    0°
+                </div>
+
+                <div class="gauge-label center">
+                    90°
+                </div>
+
+                <div class="gauge-label right">
+                    180°
+                </div>
+
+                <div class="gauge-arc"></div>
+
+                <div
+                    class="gauge-needle"
+                    id="gaugeNeedle"
+                ></div>
+
+            </div>
+
+
+            <div
+                class="alignment-status"
+                id="alignmentStatus"
+            >
+                Awaiting Movement
+            </div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             CALIBRATION
+        ================================================== -->
+
+        <div class="card calibration-card">
+
+            <h3>
+                CALIBRATION
+            </h3>
+
+            <p>
+                Place the limb in the desired reference
+                position before calibration.
+            </p>
+
+
+            <div class="button-row">
+
+                <button
+                    id="calibrateBtn"
+                    class="primary-button"
+                >
+
+                    ◎
+
+                    CALIBRATE REFERENCE
+
+                </button>
+
+
+                <button
+                    id="resetBtn"
+                    class="reset-button"
+                >
+
+                    ↻
+
+                    RESET
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             LIVE SENSOR DATA
+        ================================================== -->
+
+        <div class="card live-card">
+
+            <h3>
+                LIVE SENSOR DATA
+            </h3>
+
+
+            <div class="data-header">
+
+                <span>
+                    Sensor
+                </span>
+
+                <span>
+                    Quaternion (r, i, j, k)
+                </span>
+
+                <span>
+                    Status
+                </span>
+
+            </div>
+
+
+            <!-- FEMUR -->
+
+            <div class="data-row">
+
+                <div class="sensor-name">
+
+                    <span class="dot green"></span>
+
+                    KIT #2 - FEMUR
+
+                </div>
+
+                <span
+                    id="femurData"
+                    class="quaternion"
+                >
+                    0.000 0.000 0.000 1.000
+                </span>
+
+                <span
+                    id="thighStatus"
+                    class="live"
+                >
+                    LIVE
+                </span>
+
+            </div>
+
+
+            <!-- KNEE -->
+
+            <div class="data-row">
+
+                <div class="sensor-name">
+
+                    <span class="dot blue"></span>
+
+                    KIT #1 - KNEE
+
+                </div>
+
+                <span
+                    id="kneeData"
+                    class="quaternion"
+                >
+                    0.000 0.000 0.000 1.000
+                </span>
+
+                <span
+                    id="kneeStatus"
+                    class="live"
+                >
+                    LIVE
+                </span>
+
+            </div>
+
+
+            <!-- TIBIA -->
+
+            <div class="data-row">
+
+                <div class="sensor-name">
+
+                    <span class="dot orange"></span>
+
+                    KIT #3 - TIBIA
+
+                </div>
+
+                <span
+                    id="tibiaData"
+                    class="quaternion"
+                >
+                    0.000 0.000 0.000 1.000
+                </span>
+
+                <span
+                    id="tibiaStatus"
+                    class="live"
+                >
+                    LIVE
+                </span>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+</main>
+
+
+
+<!-- =========================================================
+     BOTTOM METRICS
+========================================================= -->
+
+<footer>
+
+
+    <div class="metric">
+
+        <div class="metric-icon">
+            ◉
+        </div>
+
+        <div>
+
+            <small>
+                Connection
+            </small>
+
+            <strong id="connectionMetric">
+                Excellent
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <div class="metric">
+
+        <div class="metric-icon">
+            ∿
+        </div>
+
+        <div>
+
+            <small>
+                Roll
+            </small>
+
+            <strong id="rollValue">
+                0.0°
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <div class="metric">
+
+        <div class="metric-icon">
+            ∿
+        </div>
+
+        <div>
+
+            <small>
+                Pitch
+            </small>
+
+            <strong id="pitchValue">
+                0.0°
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <div class="metric">
+
+        <div class="metric-icon">
+            ∿
+        </div>
+
+        <div>
+
+            <small>
+                Yaw
+            </small>
+
+            <strong id="yawValue">
+                0.0°
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <div class="metric">
+
+        <div class="metric-icon shield">
+            ✓
+        </div>
+
+        <div>
+
+            <small>
+                Data Quality
+            </small>
+
+            <strong>
+                98%
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <div class="footer-info">
+
+        ORVIA Prototype v1.0
+
+        <span>|</span>
+
+        Wireless Sensor Navigation System
+
+    </div>
+
+</footer>
+
+
+
+<script type="module" src="app.js"></script>
+
 </body>
+
 </html>
